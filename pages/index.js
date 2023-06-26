@@ -23,14 +23,16 @@ export default function Home() {
   let mt = matrix.replaceAll(' ', '')
   console.log(mt.length)
   console.log(mt)
-  if(mt.length == 30 && cpf.length > 0){
+  const cpfD = cpf.toString()
+  if(mt.length == 30 && cpfD.length > 0){
   setLoading(true)
   socket.on('loading', msg => setProgress(msg+'%'))
-  await fetch(`api/load?matrix=${mt}&cpf=${cpf}`)
+  await fetch(`api/load?matrix=${mt}&cpf=${cpfD}`)
   setLoading(false)
   setProgress('')
   }else{
-    window.alert('Confira sua matriz')
+    
+    window.alert('Confira sua matriz ' + cpfD.length)
   }
   socket.close()
 }else{
@@ -95,7 +97,7 @@ export default function Home() {
   async function formatNumber(val){
     setIsList(false)
     
-    if(val.replace(' ','') != ''){
+    if(val.replaceAll(' ','') != ''){
     
     let [a,b,c] = [val.replace(' ','').slice(0, 8), val.replace(' ','').slice(8, 18), val.replace(' ','').slice(18)];
     if(a.length == 8){
@@ -162,7 +164,7 @@ return(
 <div  style={{marginTop:"1em", display:'grid', width:"70%", marginLeft:"20%"}}>
 
 
-  <TextInput label='Insira a matriz' style={{display:"block"}} value={matrix} onChange={(e)=>formatNumber(e)} />
+  <TextInput label='Insira a matriz' style={{display:"block"}} value={matrix} onChange={(e)=>formatNumber(e.target.value)} />
   <br/>
 
   <NumberInput label="Insira o CPF do dono" style={{display:"block",  marginBottom:"5px"}} onChange={(e)=>setCpf(e)}/>

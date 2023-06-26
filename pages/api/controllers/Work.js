@@ -10,7 +10,8 @@ import getProxyList from './getProxy';
 import cpf from '../models/cpf';
 import fs from 'fs'
 import { Sequelize, Op } from 'sequelize';
-
+//import io from './socket';
+import { Server } from "socket.io";
 
 class Worker {
 
@@ -20,6 +21,16 @@ class Worker {
         this.page = {}
         this.CPF = ""
         this.groupid = []
+        
+        const io = new Server();
+
+        io.listen(3001, {cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+        }})
+
+        this.io = io;
+
     }
 
     async getCpf() {
@@ -27,7 +38,7 @@ class Worker {
         const verify = await verified.findAll()
         const listCpf = verify.length > 0 ? verify.map(e => e.dataValues.cpfreq + '\r') : []
         console.log(listCpf)
-        const query = await cpf.findOne({ where: { number: { [Op.notIn]: listCpf } } })
+        const query = await cpf.findOne({ where: { number: { [Op.notIn]: listCpf } } },  {order: [Sequelize.literal("random()")]})
 
         if (query) {
             const obj = query.toJSON()
@@ -123,6 +134,7 @@ class Worker {
 
             await connection.sync()
             await workers.create({ name: name, status: "Iniciando" })
+            
             return true
         } catch {
             return false
@@ -133,6 +145,7 @@ class Worker {
         const hour = new Date().getUTCHours() - 3
 
         if(hour < 4){
+            io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
             const date = new Date().setHours(4,0,0)
             console.log('Aguardando', date - new Date())
             await new Promise(r => setTimeout(r, date - new Date()));
@@ -144,8 +157,12 @@ class Worker {
         
     }
 
+   
     async start() {
+        
+        const io = this.io
 
+        io.emit(this.workerName,'Iniciando Browser')
         await this.isBreakTime()
         const verifyInstance = await workers.findOne({ where: { name: this.workerName } })
 
@@ -174,6 +191,7 @@ class Worker {
         }
 
         try {
+            io.emit(this.workerName, 'Acessando a página')
             await page.goto('https://www.chequelegal.com.br');
 
             const checkReloadCaptcha = () => null;
@@ -183,6 +201,7 @@ class Worker {
             await page.exposeFunction(atualizacaoAutomaticaCaptcha.name, atualizacaoAutomaticaCaptcha);
             await page.evaluate(() => atualizacaoAutomaticaCaptcha());
 
+            io.emit(this.workerName, 'Solicitando código para consulta')
             const barCode = await this.getBarCode();
             if (!barCode) {
                 await workers.destroy({ where: { id: this.id } })
@@ -190,6 +209,7 @@ class Worker {
                 return
             }
             console.log('barcode', barCode)
+            io.emit(this.workerName, `Consultando código ${barCode.number}`)
             const [a, b, c] = [barCode.number.slice(0, 8), barCode.number.slice(8, 18), barCode.number.slice(18)];
             this.barCode = barCode
             const cpfReq = await this.getCpf()
@@ -201,8 +221,11 @@ class Worker {
             await cap.screenshot({ path: './public/' + imgname, threshold: 0 })
             const capImage = await this.handleImage(imgname)
 
+            io.emit(this.workerName, 'Aguardando resolução do captcha')
             const solvedCapatcha = await getCaptcha(false, capImage)
             console.log(cpfReq)
+
+            io.emit(this.workerName, 'Consultando...')
             await page.$eval('input[name="cpfCnpjEmitente"]', input => input.value = null);
             await page.type('input[name="cpfCnpjEmitente"]', barCode.cpf);
 
@@ -231,7 +254,7 @@ class Worker {
             await page.click('#btEnviar');
 
             await new Promise(r => setTimeout(r, 10000));
-
+            await page.screenshot({ path: './public/screenshot/' + barCode.number +'.png', threshold: 0 })
             const err = await page.$x('//*[@id="errors"]')
             const okElement = await page.$x('//*[@id="detalheCheque"]')
 
@@ -240,8 +263,10 @@ class Worker {
                 const errText = await page.evaluate(e => e.textContent, err[0])
                 if (errText.replaceAll('\n', '').replaceAll(/\t/g, '').replaceAll(' ', '') != '') {
                     console.log(errText)
+                    io.emit(this.workerName, `Erro: ${errText}} `)
                     if (errText == "Código da Imagem: Caracteres do captcha não foram preenchidos corretamente ou o tempo máximo para preenchimento foi ultrapassado" || errText == ": Erro inesperado") {
                         await preload.update({ free: true }, { where: { id: barCode.id } })
+                        io.emit(this.workerName, 'Repetindo a consulta')
                     } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque") {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: errText, cpfreq: cpfReq, groupid: barCode.groupid });
@@ -255,8 +280,10 @@ class Worker {
 
             if (okElement.length > 0) {
                 const okText = await page.evaluate(e => e.textContent, okElement[0])
+                
                 console.log(okText.replace(' ', '').replace(/\t/g, '') == '')
                 if (okText.replaceAll('\n', '').replaceAll(/\t/g, '').replaceAll(' ', '') != '') {
+                    io.emit(this.workerName, `Resultado: ${okText}`)
                     if (okText.startsWith('Cheque não possui ocorrências')) {
                         await verified.create({ number: barCode.number, status: 'Cheque não possui ocorrências', cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
