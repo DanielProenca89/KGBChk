@@ -201,7 +201,7 @@ class Worker {
             await page.exposeFunction(atualizacaoAutomaticaCaptcha.name, atualizacaoAutomaticaCaptcha);
             await page.evaluate(() => atualizacaoAutomaticaCaptcha());
 
-            io.emit(this.workerName, 'Solicitando código para consulta')
+
             const barCode = await this.getBarCode();
             if (!barCode) {
                 await workers.destroy({ where: { id: this.id } })
@@ -209,7 +209,7 @@ class Worker {
                 return
             }
             console.log('barcode', barCode)
-            io.emit(this.workerName, `Consultando código ${barCode.number}`)
+
             const [a, b, c] = [barCode.number.slice(0, 8), barCode.number.slice(8, 18), barCode.number.slice(18)];
             this.barCode = barCode
             const cpfReq = await this.getCpf()
@@ -225,7 +225,6 @@ class Worker {
             const solvedCapatcha = await getCaptcha(false, capImage)
             console.log(cpfReq)
 
-            io.emit(this.workerName, 'Consultando...')
             await page.$eval('input[name="cpfCnpjEmitente"]', input => input.value = null);
             await page.type('input[name="cpfCnpjEmitente"]', barCode.cpf);
 
@@ -263,10 +262,10 @@ class Worker {
                 const errText = await page.evaluate(e => e.textContent, err[0])
                 if (errText.replaceAll('\n', '').replaceAll(/\t/g, '').replaceAll(' ', '') != '') {
                     console.log(errText)
-                    io.emit(this.workerName, `Erro: ${errText}} `)
+           
                     if (errText == "Código da Imagem: Caracteres do captcha não foram preenchidos corretamente ou o tempo máximo para preenchimento foi ultrapassado" || errText == ": Erro inesperado") {
                         await preload.update({ free: true }, { where: { id: barCode.id } })
-                        io.emit(this.workerName, 'Repetindo a consulta')
+
                     } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque") {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: errText, cpfreq: cpfReq, groupid: barCode.groupid });
@@ -283,7 +282,7 @@ class Worker {
                 
                 console.log(okText.replace(' ', '').replace(/\t/g, '') == '')
                 if (okText.replaceAll('\n', '').replaceAll(/\t/g, '').replaceAll(' ', '') != '') {
-                    io.emit(this.workerName, `Resultado: ${okText}`)
+             
                     if (okText.startsWith('Cheque não possui ocorrências')) {
                         await verified.create({ number: barCode.number, status: 'Cheque não possui ocorrências', cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
