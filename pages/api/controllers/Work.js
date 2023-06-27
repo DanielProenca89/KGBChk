@@ -171,7 +171,7 @@ class Worker {
 
    
     async start() {
-        
+        const timeOut = setTimeout(()=>this.next(),300000)
         const io = this.io
 
         //io.emit(this.workerName,'Iniciando Browser')
