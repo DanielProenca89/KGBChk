@@ -29,12 +29,16 @@ const getCaptcha = async (math, img)=>{
 
 const apiKey = '9357f496505f8587ff2183f4f96d1157';
 
-const filePath = './public/'+img;
-const filePathAux = './public/ok_'+img;
+const filePath = './public/captcha/'+img;
+const filePathAux = './public/captcha/'+img.replace('ok_','');
 const solver = new Solver(apiKey)
-const res = await solver.imageCaptcha(fs.readFileSync(filePath, "base64"))
-fs.unlink(filePath,()=>console.log('imagem apagada'))
-fs.unlink(filePathAux, ()=>console.log('imagem auxiliar apagada'))
+const res = await solver.imageCaptcha(fs.readFileSync(filePathAux, "base64"))
+fs.unlink(filePath,(err)=>{
+    if(err) console.log(err);
+})
+fs.unlink(filePathAux, (err)=>{
+    if(err) console.log(err);
+})
 return res
 
 }

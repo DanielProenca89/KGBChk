@@ -85,7 +85,7 @@ class Worker {
     }
 
     async handleImage(imagename) {
-        const imagePath = './public/' + imagename;
+        const imagePath = './public/captcha/' + imagename;
         const scale = 2;
         await sharp(imagePath)
             .metadata()
@@ -95,7 +95,7 @@ class Worker {
                 return sharp(imagePath)
                     .resize(width, height)
                     .grayscale() // Converter para escala de cinza
-                    .toFile(`./public/ok_${imagename}`);
+                    .toFile(`./public/captcha/ok_${imagename}`);
             })
             .then(() => {
                 console.log('Imagem ampliada criada com sucesso!');
@@ -145,10 +145,12 @@ class Worker {
         const hour = new Date().getUTCHours() - 3
 
         if(hour < 4){
-            io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
+            //io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
             const date = new Date().setHours(4,0,0)
             console.log('Aguardando', date - new Date())
             await new Promise(r => setTimeout(r, date - new Date()));
+            await this.setProxy()
+            await this.cookies()
         }else{
             return false
         }
@@ -218,7 +220,7 @@ class Worker {
             const [cap] = await page.$x('//*[@id="lbCaptcha"]/table/tbody/tr/td[2]')
 
             const imgname = new Date().getMilliseconds() + '.png'
-            await cap.screenshot({ path: './public/' + imgname, threshold: 0 })
+            await cap.screenshot({ path: './public/captcha/' + imgname, threshold: 0 })
             const capImage = await this.handleImage(imgname)
 
             io.emit(this.workerName, 'Aguardando resolução do captcha')
@@ -284,8 +286,10 @@ class Worker {
                 if (okText.replaceAll('\n', '').replaceAll(/\t/g, '').replaceAll(' ', '') != '') {
              
                     if (okText.startsWith('Cheque não possui ocorrências')) {
+                        await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: 'Cheque não possui ocorrências', cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
+                        if(okText.includes("domicílio")) await preload.update({ paused: true }, { where: { groupid: barCode.groupid }})
                         await verified.create({ number: barCode.number, status: okText, cpfreq: cpfReq, groupid: barCode.groupid });
                     }
                 }
