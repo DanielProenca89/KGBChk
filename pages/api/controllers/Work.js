@@ -174,7 +174,7 @@ class Worker {
         
         const io = this.io
 
-        io.emit(this.workerName,'Iniciando Browser')
+        //io.emit(this.workerName,'Iniciando Browser')
         await this.isBreakTime()
         const verifyInstance = await workers.findOne({ where: { name: this.workerName } })
 
@@ -185,7 +185,7 @@ class Worker {
         const instance = verifyInstance.toJSON()
         this.id = instance.id
         await this.setProxy()
-        const browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ args: [
+        const browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
             '--disable-dev-shm-usage',
@@ -196,7 +196,7 @@ class Worker {
             '--single-process',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
 
-        const timeOut = setTimeout(()=>this.next(),300000)
+        
 
         const page = await browser.newPage();
         const cookies = fs.readFileSync(`./public/cookies/${this.workerName}.json`, "utf8");
@@ -206,7 +206,7 @@ class Worker {
         }
 
         try {
-            io.emit(this.workerName, 'Acessando a página')
+            //io.emit(this.workerName, 'Acessando a página')
             await page.goto('https://www.chequelegal.com.br');
 
             const checkReloadCaptcha = () => null;
@@ -219,7 +219,8 @@ class Worker {
 
             const barCode = await this.getBarCode();
             if (!barCode) {
-                await workers.destroy({ where: { id: this.id } })
+                console.log('codigo de barras não definido')
+                //await workers.destroy({ where: { id: this.id } })
                 browser.close();
                 clearTimeout(timeOut)
                 return
@@ -237,7 +238,7 @@ class Worker {
             await cap.screenshot({ path: './public/captcha/' + imgname, threshold: 0 })
             const capImage = await this.handleImage(imgname)
 
-            io.emit(this.workerName, 'Aguardando resolução do captcha')
+            //io.emit(this.workerName, 'Aguardando resolução do captcha')
             const solvedCapatcha = await getCaptcha(false, capImage)
             console.log(cpfReq)
 
