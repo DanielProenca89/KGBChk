@@ -58,8 +58,8 @@ class Worker {
             
              
             await connection.sync();
-            const res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
-            
+            let res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
+            if(!res) this.groupid = this.groupid.filter(e=>e != this.groupid[this.nextNum]); res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
             if(this.nextNum >= this.groupid.length - 1){
                 this.nextNum = 0
             }else{
@@ -220,7 +220,7 @@ class Worker {
             const barCode = await this.getBarCode();
             if (!barCode) {
                 console.log('codigo de barras não definido')
-                //await workers.destroy({ where: { id: this.id } })
+                await workers.destroy({ where: { id: this.id } })
                 browser.close();
                 clearTimeout(timeOut)
                 return
