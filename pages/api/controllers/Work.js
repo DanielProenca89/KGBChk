@@ -278,6 +278,7 @@ class Worker {
            
                     if (errText == "Código da Imagem: Caracteres do captcha não foram preenchidos corretamente ou o tempo máximo para preenchimento foi ultrapassado" || errText == ": Erro inesperado") {
                         await preload.update({ free: true }, { where: { id: barCode.id } })
+                        this.nextNum = this.nextNum - 1
 
                     } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque") {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
@@ -300,7 +301,7 @@ class Worker {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: 'Cheque não possui ocorrências', cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
-                        if(okText.includes("domicílio")) await preload.update({ paused: true }, { where: { groupid: barCode.groupid }})
+                        if(okText.includes("Cheque enviado ao domicilio do correntista cujo desbloqueio nao tenha sido realizado.")) await preload.update({ paused: true }, { where: { groupid: barCode.groupid }})
                         await verified.create({ number: barCode.number, status: okText, cpfreq: cpfReq, groupid: barCode.groupid });
                     }
                 }
