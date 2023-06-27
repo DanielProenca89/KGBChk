@@ -21,7 +21,7 @@ class Worker {
         this.page = {}
         this.CPF = ""
         this.groupid = []
-        
+        this.nextNum = 0
         const io = new Server();
 
         io.listen(3001, {cors: {
@@ -55,8 +55,18 @@ class Worker {
     async getBarCode() {
         try {
             this.data = null;
+            
+             
             await connection.sync();
-            const res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid:{[Op.in]:this.groupid}}]}});
+            const res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
+            
+            if(this.nextNum >= this.groupid.length - 1){
+                this.nextNum = 0
+            }else{
+                this.nextNum = this.nextNum + 1
+            }
+
+
 
             if (res) {
                 const data = res.toJSON()
