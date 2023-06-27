@@ -196,6 +196,8 @@ class Worker {
             '--single-process',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
 
+        const timeOut = setTimeout(()=>this.next(),300000)
+
         const page = await browser.newPage();
         const cookies = fs.readFileSync(`./public/cookies/${this.workerName}.json`, "utf8");
 
@@ -219,6 +221,7 @@ class Worker {
             if (!barCode) {
                 await workers.destroy({ where: { id: this.id } })
                 browser.close();
+                clearTimeout(timeOut)
                 return
             }
             console.log('barcode', barCode)
@@ -308,6 +311,7 @@ class Worker {
             }
 
             await browser.close()
+            clearTimeout(timeOut)
             this.next()
 
         } catch (e) {
@@ -316,6 +320,7 @@ class Worker {
                 await preload.update({ free: true }, { where: { id: this.data.id } })
             }
             await browser.close()
+            clearTimeout(timeOut)
             this.next()
         }
     }
