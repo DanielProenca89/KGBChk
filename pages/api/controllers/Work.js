@@ -153,7 +153,7 @@ class Worker {
 
     async isBreakTime(){
         const hour = new Date().getUTCHours() - 3
-
+        console.log(hour)
         if(hour < 4){
             //io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
             const date = new Date().setHours(4,0,0)
@@ -172,7 +172,7 @@ class Worker {
    
     async start() {
         const timeOut = setTimeout(()=>this.next(),300000)
-        const io = this.io
+        //const io = this.io
 
         //io.emit(this.workerName,'Iniciando Browser')
         await this.isBreakTime()
