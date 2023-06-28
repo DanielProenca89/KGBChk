@@ -172,6 +172,7 @@ class Worker {
    
     async start() {
         const timeOut = setTimeout(()=>this.next(),300000)
+        try {
         //const io = this.io
 
         //io.emit(this.workerName,'Iniciando Browser')
@@ -205,7 +206,7 @@ class Worker {
             await page.setCookie(cookie);
         }
 
-        try {
+  
             //io.emit(this.workerName, 'Acessando a página')
             await page.goto('https://www.chequelegal.com.br');
 
