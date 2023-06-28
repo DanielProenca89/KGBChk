@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TextInput, NumberInput, MultiSelect, Button, Textarea } from "@mantine/core";
+import { TextInput, NumberInput, MultiSelect, Button, Textarea, Select } from "@mantine/core";
 import { io } from "socket.io-client";
 export default function Home() {
   
@@ -13,9 +13,11 @@ export default function Home() {
   const [cpf, setCpf] = useState("")
   const [matrix, setMatrix] = useState("")
   const [loaded, setLoaded] = useState({})
-  const [group, setGroup] = useState("")
+  const [group, setGroup] = useState([])
   const [isList, setIsList] = useState(false)
   const [matrixList, setList] = useState('')
+  const [filterList, setFilterList] = useState([])
+  const [selectLoaded, setSelectLoaded] = useState([])
 
   const load= async ()=>{
   if(!isList){
@@ -135,12 +137,59 @@ export default function Home() {
   async function getLoaded(){
     const res = await fetch('api/loaded')
     const json = await res.json()
-    setLoaded(json)
+    let l = 1
+    let arr = []
+    let aux = []
+
+    json.forEach((e,i)=>{
+      if(e.listId == l){
+        aux.push(e)
+      }else{
+        arr.push(aux)
+        l = e.listId
+        aux = [e]
+        if(i == json.length -1){
+          arr.push(aux)
+        }
+      }
+    })
+
+    const lists = arr.map(e=>{return {value:e[0].listId, label:`Lista ${e[0].listId}`}})
+    lists.push({value:0, label:"Todas"})
+    setFilterList(lists)
+
+
+    setLoaded(arr)
   }
 
   async function reloadMatrix(groupid){
     await fetch('api/reload?groupid='+groupid)
   }
+
+
+  async function filtredList(val){
+
+    const filter =  loaded.flat().filter(e=>{
+      return e.listId == val
+    }).map(e=>e.groupid)
+    console.log(filter)
+    setGroup(filter)
+
+    const select = []
+
+    loaded.forEach((e,j)=>{
+
+      e.forEach((el, i)=>{
+        select.push({value:el.groupid, label: (j+1) +'-'+ (i+1)})
+      })
+
+    })
+
+    setSelectLoaded(select)
+    
+
+  }
+
 
   useEffect(()=>{
 
@@ -157,59 +206,61 @@ export default function Home() {
 return(
   <>
 
-  
+  <div style={{display:"grid", gridTemplateRows:"50% 50%"}}>
   
 <div style={{display:'grid',  gridTemplateColumns:"50% 50%" , gap:"1em"}}>
 
-<div  style={{marginTop:"1em", display:'grid', width:"70%", marginLeft:"20%"}}>
+<div  style={{ display:'flex',flexDirection:"column" , marginLeft:"10%", marginTop:"40px"}}>
 
 
-  <TextInput label='Insira a matriz' style={{display:"block"}} value={matrix} onChange={(e)=>formatNumber(e.target.value)} />
+ { /*<TextInput label='Insira a matriz' style={{display:"block"}} value={matrix} onChange={(e)=>formatNumber(e.target.value)} />
   <br/>
 
   <NumberInput label="Insira o CPF do dono" style={{display:"block",  marginBottom:"5px"}} onChange={(e)=>setCpf(e)}/>
 
   <br/>
-
+*/}
 
   <Textarea autosize minRows={5} onChange={(e)=>insertList(e.target.value)} label="Insira sua lista"  placeholder="Ex: 033427890180000345999019453523|35281301802"/>
-
-  
-
+<br/>
   <Button onClick={()=>load()} loading={loading}>Gerar números</Button>
-  <br/>
+<br/>
   <Button onClick={()=>deleteMatrix()} loading={deletingMatrix} color='red'>Limpar matrizes</Button>
-  <br/>
 
 
-
-
+<Select label="Selecione a lista" onChange={(e)=>filtredList(e)} data={filterList}/>
+<br/>
   <TextInput onChange={(e)=>setInstaceName(e.target.value)} label='Insira o nome da instancia'/>
-<MultiSelect  onChange={(e)=>setGroup(e)} label="Selecione as matrizes" data={loaded.length > 0?loaded.map(e=>{return {value:e.groupid, label:e.id}}):[]} />
- 
+  <br/>
+<MultiSelect value={group}  onChange={(e)=>setGroup(e)} label="Selecione as matrizes" data={selectLoaded.length > 0?selectLoaded:[]} />
+ <br/>
   <Button onClick={()=>work()}>Nova Instancia</Button>
 </div>
 
-<div>
+<div style={{maxHeight:"45%"}}>
   <h4>Matrizes</h4>
-  {loaded.length>0?loaded.map((e,i)=> 
-  <div key={i} style={{marginTop:"10px"}}><strong>{e.id}</strong> - <strong>{e.groupid}</strong>  ---  <strong style={{color:e.paused == 0?'green':'red'}}>{e.paused == 0?'Ativa':'Pausada'}
-  </strong> --- <strong>
+<div style={{overflow:"auto", maxHeight:"500px" ,backgroundColor:"aliceblue", padding:"1em"}}>
+  {loaded.length>0?loaded.map((el)=>el.map((e,i)=>{
+return <><div key={i} style={{ display: i == 0 ? "block" : "none", color:"red", fontWeight:"bolder", marginBottom:"1em",marginTop:"1em", borderBottom:"1px solid #000"  }}> Lista {el[0].listId}</div><div key={i} style={{ marginTop: "10px" }}><strong>{i + 1}</strong> - <strong>{e.groupid}</strong>  ---  <strong style={{ color: e.paused == 0 ? 'green' : 'red' }}>{e.paused == 0 ? 'Ativa' : 'Pausada'}
+
+</strong> --- <strong>
     {e.numbers}
-    </strong> / <strong>{e.numbers - e.free}
-    </strong> 
-    <button onClick={()=>deleteMatrix(e.groupid)} style={{marginRight:"5px", marginLeft:"10px"}}>Apagar</button> 
-    {e.paused == 0?"":<button onClick={()=>reloadMatrix(e.groupid)}>Reativar</button>} </div>):""}
+  </strong> / <strong>{e.numbers - e.free}
+  </strong>
+  <button onClick={() => deleteMatrix(e.groupid)} style={{ marginRight: "5px", marginLeft: "10px" }}>Apagar</button>
+  {e.paused == 0 ? "" : <button onClick={() => reloadMatrix(e.groupid)}>Reativar</button>} </div></>})):""}
+  
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 
-</div>
 
-
-
-
-
-<div style={{width:"90%", marginLeft:"5%", marginTop:"20px"}}>
+<div style={{width:"90%", marginLeft:"5%"}}>
 <span style={{margin:"1em"}}>Resultados: <strong>{results.length}</strong></span>
 <Textarea minRows={5} value={results?.map(e=> [e.number.slice(0,8), e.number.slice(8,18), e.number.slice(18)].join(' ') +"  "+ e.status).join('\n')}/>
 <Button color={'red'} onClick={()=>deleteResults()} loading={deletingResults}>Limpar resultados</Button>

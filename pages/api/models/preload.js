@@ -26,6 +26,9 @@ const preload = connection.define('Preload',{
     paused:{
         type: DataTypes.BOOLEAN,
         defaultValue:false
+    },
+    listId:{
+        type:DataTypes.INTEGER,
     }
 
 

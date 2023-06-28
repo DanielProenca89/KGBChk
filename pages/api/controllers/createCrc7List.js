@@ -1,6 +1,7 @@
 import {connection} from '../models/connection'
 import preload from '../models/preload'
-import { Server } from "socket.io";
+import {QueryTypes, where} from 'sequelize'
+//import { Server } from "socket.io";
 
 
 
@@ -17,12 +18,26 @@ return array;
 }
 
 const createNumberFromList = async (matrix=[], cpf)=>{
-    const io = new Server();
+  await connection.sync() 
+  // const io = new Server();
    /* io.emit('loading', false)
     io.listen(3001, {cors: {
         origin: "*",
         methods: ["GET", "POST"]
       }})*/
+      let listId;
+    try{
+    const lastId = await connection.query('SELECT distinct(listId) as listId from Preloads  ORDER BY createdAt desc limit 1', {type:QueryTypes.SELECT})
+
+    if(lastId.length == 0){ 
+      listId = 1
+
+    }else{
+      listId =  parseInt(lastId[0].listId) > 0?lastId[0].listId + 1:1
+    }
+  }catch{
+      return
+  }
     let [cm1, cm2, cm3] = matrix
 
     cm1 = cm1.split('')
@@ -31,7 +46,7 @@ const createNumberFromList = async (matrix=[], cpf)=>{
     
     const numbers = _getRandom()
 
-    await connection.sync({force:true})
+    await connection.sync()
     const payload = numbers.map(element => {
         
         let [b,c] = element
@@ -45,7 +60,8 @@ const createNumberFromList = async (matrix=[], cpf)=>{
             number:cmc7,
             free:true,
             cpf:cpf,
-            groupid:matrix.join('')
+            groupid:matrix.join(''),
+            listId:listId
             }
 
     })

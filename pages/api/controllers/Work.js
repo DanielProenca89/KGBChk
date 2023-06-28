@@ -325,6 +325,7 @@ class Worker {
             console.log(e)
             if (this.data) {
                 await preload.update({ free: true }, { where: { id: this.data.id } })
+                
             }
             clearTimeout(timeOut)
             this.next()
