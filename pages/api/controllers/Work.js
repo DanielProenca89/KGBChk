@@ -159,7 +159,7 @@ class Worker {
             const date = new Date().setHours(4,0,0)
             console.log('Aguardando', date - new Date())
             await new Promise(r => setTimeout(r, date - new Date()));
-            await this.setProxy()
+            //await this.setProxy()
             await this.cookies()
         }else{
             return false
