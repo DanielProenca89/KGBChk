@@ -226,6 +226,7 @@ class Worker {
                 this.nextNum = this.nextNum + 1
                 clearTimeout(timeOut)
                 this.next()
+                return
             }
             console.log('barcode', barCode)
 
