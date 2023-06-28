@@ -174,9 +174,6 @@ class Worker {
             if(this.browser) this.browser.close()
         },300000)
 
-        try {
-
-
         await this.isBreakTime()
      
         const verifyInstance = await workers.findOne({ where: { name: this.workerName } })
@@ -196,9 +193,6 @@ class Worker {
         
         const cookies = fs.readFileSync(`./public/cookies/${this.workerName}.json`, "utf8");
 
-        for (const cookie of JSON.parse(cookies)) {
-            await page.setCookie(cookie);
-        }
 
         const barCode = await this.getBarCode();
         if (!barCode) {
@@ -212,7 +206,7 @@ class Worker {
         this.barCode = barCode
         const cpfReq = await this.getCpf()
 
-        this.browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
+        const browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
             '--disable-dev-shm-usage',
@@ -223,7 +217,13 @@ class Worker {
             '--single-process',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
 
-            const page = await this.browser.newPage();
+        try {
+       
+            const page = await browser.newPage();
+            
+            for (const cookie of JSON.parse(cookies)) {
+                await page.setCookie(cookie);
+            }
             await page.goto('https://www.chequelegal.com.br');
 
             const checkReloadCaptcha = () => null;
@@ -316,7 +316,7 @@ class Worker {
                 }
             }
 
-            if(this.browser) await this.browser.close();
+            if(browser) await browser.close();
             clearTimeout(timeOut)
             this.next()
             return
@@ -326,10 +326,12 @@ class Worker {
             if (this.data) {
                 await preload.update({ free: true }, { where: { id: this.data.id } })
             }
-            if(this.browser) this.browser.close();
             clearTimeout(timeOut)
             this.next()
             return 
+        }finally {
+            await browser.close();
+            return
         }
     }
 
