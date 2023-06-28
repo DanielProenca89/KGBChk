@@ -316,6 +316,7 @@ class Worker {
             if(browser) await browser.close();
             clearTimeout(timeOut)
             this.next()
+            return
 
         } catch (e) {
             console.log(e)
