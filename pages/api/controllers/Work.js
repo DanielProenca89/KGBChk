@@ -22,15 +22,7 @@ class Worker {
         this.CPF = ""
         this.groupid = []
         this.nextNum = 0
-        //const io = new Server();
-
-        /*io.listen(3001, {cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-        }})*/
-
-        /*this.io = io;*/
-
+        this.browser = {}
     }
 
     async getCpf() {
@@ -65,8 +57,6 @@ class Worker {
             }else{
                 this.nextNum = this.nextNum + 1
             }
-
-
 
             if (res) {
                 const data = res.toJSON()
@@ -123,17 +113,25 @@ class Worker {
 
     async cookies() {
         const proxy = await this.setProxy();
+        if(proxy){
         await saveCookies(this.workerName, proxy)
+        }else{
+        this.next()
+        return 
+        }
     }
 
     async setProxy() {
         await this.isBreakTime()
         const res = await getProxyList()
+        if(res.data){
         const change = Math.floor(Math.random() * (res.data.length - 1))
-
         this.proxy = res.data[change]
         console.log(res.data[change])
         return res.data[change]
+        }else{
+            return {}
+        }
     }
 
 
@@ -171,22 +169,50 @@ class Worker {
 
    
     async start() {
-        const timeOut = setTimeout(()=>this.next(),300000)
+        const timeOut = setTimeout(()=>{
+            this.next();
+            if(this.browser) this.browser.close()
+        },300000)
+
         try {
-        //const io = this.io
 
-        //io.emit(this.workerName,'Iniciando Browser')
+
         await this.isBreakTime()
+     
         const verifyInstance = await workers.findOne({ where: { name: this.workerName } })
-
         if (!verifyInstance) {
-           if(browser) browser.close();
+            clearTimeout(timeOut)
             return
         };
         const instance = verifyInstance.toJSON()
         this.id = instance.id
-        await this.setProxy()
-        const browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
+
+        const proxy = await this.setProxy()
+        if(!proxy){
+            this.next()
+            clearTimeout(timeOut)
+            return
+        }
+        
+        const cookies = fs.readFileSync(`./public/cookies/${this.workerName}.json`, "utf8");
+
+        for (const cookie of JSON.parse(cookies)) {
+            await page.setCookie(cookie);
+        }
+
+        const barCode = await this.getBarCode();
+        if (!barCode) {
+            console.log('codigo de barras não definido')
+            this.nextNum = this.nextNum + 1
+            clearTimeout(timeOut)
+            this.next()
+            return
+        }
+        console.log('barcode', barCode)
+        this.barCode = barCode
+        const cpfReq = await this.getCpf()
+
+        this.browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
             '--disable-dev-shm-usage',
@@ -197,17 +223,7 @@ class Worker {
             '--single-process',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
 
-        
-
-        const page = await browser.newPage();
-        const cookies = fs.readFileSync(`./public/cookies/${this.workerName}.json`, "utf8");
-
-        for (const cookie of JSON.parse(cookies)) {
-            await page.setCookie(cookie);
-        }
-
-  
-            //io.emit(this.workerName, 'Acessando a página')
+            const page = await this.browser.newPage();
             await page.goto('https://www.chequelegal.com.br');
 
             const checkReloadCaptcha = () => null;
@@ -217,22 +233,9 @@ class Worker {
             await page.exposeFunction(atualizacaoAutomaticaCaptcha.name, atualizacaoAutomaticaCaptcha);
             await page.evaluate(() => atualizacaoAutomaticaCaptcha());
 
-
-            const barCode = await this.getBarCode();
-            if (!barCode) {
-                console.log('codigo de barras não definido')
-                //await workers.destroy({ where: { id: this.id } })
-                if (browser) browser.close();
-                this.nextNum = this.nextNum + 1
-                clearTimeout(timeOut)
-                this.next()
-                return
-            }
-            console.log('barcode', barCode)
-
             const [a, b, c] = [barCode.number.slice(0, 8), barCode.number.slice(8, 18), barCode.number.slice(18)];
-            this.barCode = barCode
-            const cpfReq = await this.getCpf()
+
+
 
             await page.waitForXPath('//*[@id="lbCaptcha"]/table/tbody/tr/td[2]')
             const [cap] = await page.$x('//*[@id="lbCaptcha"]/table/tbody/tr/td[2]')
@@ -243,7 +246,6 @@ class Worker {
 
             //io.emit(this.workerName, 'Aguardando resolução do captcha')
             const solvedCapatcha = await getCaptcha(false, capImage)
-            console.log(cpfReq)
 
             await page.$eval('input[name="cpfCnpjEmitente"]', input => input.value = null);
             await page.type('input[name="cpfCnpjEmitente"]', barCode.cpf);
@@ -314,7 +316,7 @@ class Worker {
                 }
             }
 
-            if(browser) await browser.close();
+            if(this.browser) await this.browser.close();
             clearTimeout(timeOut)
             this.next()
             return
@@ -324,7 +326,7 @@ class Worker {
             if (this.data) {
                 await preload.update({ free: true }, { where: { id: this.data.id } })
             }
-
+            if(this.browser) this.browser.close();
             clearTimeout(timeOut)
             this.next()
             return 

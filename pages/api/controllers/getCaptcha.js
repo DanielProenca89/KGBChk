@@ -28,7 +28,7 @@ function base64_encode(file) {
 const getCaptcha = async (math, img)=>{
 
 const apiKey = '9357f496505f8587ff2183f4f96d1157';
-
+try{
 const filePath = './public/captcha/'+img;
 const filePathAux = './public/captcha/'+img.replace('ok_','');
 const solver = new Solver(apiKey)
@@ -41,6 +41,10 @@ fs.unlink(filePathAux, (err)=>{
 })
 return res
 
-}
 
+}catch(e){
+    console.log(e)
+    return {data:"erro"}
+}
+}
 export default getCaptcha;
