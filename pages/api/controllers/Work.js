@@ -325,6 +325,7 @@ class Worker {
 
             clearTimeout(timeOut)
             this.next()
+            return 
         }
     }
 
