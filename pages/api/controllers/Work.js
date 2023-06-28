@@ -180,7 +180,7 @@ class Worker {
         const verifyInstance = await workers.findOne({ where: { name: this.workerName } })
 
         if (!verifyInstance) {
-            browser.close()
+           if(browser) browser.close();
             return
         };
         const instance = verifyInstance.toJSON()
