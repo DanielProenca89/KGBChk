@@ -59,7 +59,7 @@ class Worker {
              
             await connection.sync();
             let res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
-            if(!res) this.groupid = this.groupid.filter(e=>e != this.groupid[this.nextNum]); res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
+            if(!res) this.groupid = this.groupid.filter(e=>e != this.groupid[this.nextNum]); this.nextNum = this.nextNum - 1 ;res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
             if(this.nextNum >= this.groupid.length - 1){
                 this.nextNum = 0
             }else{
