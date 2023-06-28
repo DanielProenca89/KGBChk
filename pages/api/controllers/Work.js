@@ -322,7 +322,7 @@ class Worker {
             if (this.data) {
                 await preload.update({ free: true }, { where: { id: this.data.id } })
             }
-            if(browser) await browser.close();
+
             clearTimeout(timeOut)
             this.next()
         }
