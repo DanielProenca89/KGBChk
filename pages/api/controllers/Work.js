@@ -24,12 +24,12 @@ class Worker {
         this.nextNum = 0
         const io = new Server();
 
-        io.listen(3001, {cors: {
+        /*io.listen(3001, {cors: {
         origin: "*",
         methods: ["GET", "POST"]
-        }})
+        }})*/
 
-        this.io = io;
+        /*this.io = io;
 
     }
 
