@@ -144,6 +144,9 @@ export default function Home() {
     json.forEach((e,i)=>{
       if(e.listId == l){
         aux.push(e)
+        if(i == json.length -1){
+          arr.push(aux)
+        }
       }else{
         arr.push(aux)
         l = e.listId
