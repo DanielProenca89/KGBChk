@@ -31,11 +31,12 @@ class Worker {
         const verify = await verified.findAll()
         const listCpf = verify.length > 0 ? verify.map(e => e.dataValues.cpfreq + '\r') : []
         console.log(listCpf)
-        const change = Math.floor(Math.random() * 20)
-        const query = await cpf.findAll({ where: { number: { [Op.notIn]: listCpf } } },  {limit:50})
+        const change = Math.floor(Math.random() * 10000)
+        const query = await cpf.findOne({ where: {id:change+1} })
+
 
         if (query) {
-            const obj = query[change].dataValues
+            const obj = query.toJSON()
             console.log('CPF',obj)
             const number = obj.number.replace('\r', '')
             return number
