@@ -31,10 +31,11 @@ class Worker {
         const verify = await verified.findAll()
         const listCpf = verify.length > 0 ? verify.map(e => e.dataValues.cpfreq + '\r') : []
         console.log(listCpf)
-        const query = await cpf.findOne({ where: { number: { [Op.notIn]: listCpf } } },  {order: [Sequelize.literal("random()")]})
+        const change = Math.floor(Math.random() * 49)
+        const query = await cpf.findAll({ where: { number: { [Op.notIn]: listCpf } } },  {limit:50})
 
         if (query) {
-            const obj = query.toJSON()
+            const obj = query[change].dataValues
             console.log(obj)
             const number = obj.number.replace('\r', '')
             return number
@@ -219,9 +220,9 @@ class Worker {
         console.log('barcode', barCode)
         this.barCode = barCode
         const cpfReq = await this.getCpf()
-
+        let browser = undefined;
         try{
-        const browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
+        browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
             '--disable-dev-shm-usage',
@@ -357,7 +358,7 @@ class Worker {
             this.next()
             return 
         }finally {
-            await browser.close();
+            if(browser) await browser.close();
             return
         }
     }
