@@ -214,7 +214,6 @@ class Worker {
             '--no-first-run',
             '--no-sandbox',
             '--no-zygote',
-            '--single-process',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
 
         try {
