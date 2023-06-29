@@ -9,7 +9,6 @@ async function saveCookies(sessionName, proxy) {
     '--no-first-run',
     '--no-sandbox',
     '--no-zygote',
-    '--single-process',
 ], ignoreDefaultArgs: ['--disable-extensions'] });
   const page = await browser.newPage();
 

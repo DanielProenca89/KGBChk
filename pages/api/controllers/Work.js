@@ -309,7 +309,11 @@ class Worker {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: 'Cheque não possui ocorrências', cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
-                        if(okText.includes("Cheque enviado ao domicilio do correntista cujo desbloqueio nao tenha sido realizado.")) await preload.update({ paused: true }, { where: { groupid: barCode.groupid }})
+                        if(okText.includes("Consulta realizada fora da grade horária")){
+                            this.isBreakTime()
+                            this.next()
+                            return
+                        }
                         await verified.create({ number: barCode.number, status: okText, cpfreq: cpfReq, groupid: barCode.groupid });
                     }
                 }
