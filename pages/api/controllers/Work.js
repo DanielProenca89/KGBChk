@@ -31,12 +31,12 @@ class Worker {
         const verify = await verified.findAll()
         const listCpf = verify.length > 0 ? verify.map(e => e.dataValues.cpfreq + '\r') : []
         console.log(listCpf)
-        const change = Math.floor(Math.random() * 49)
+        const change = Math.floor(Math.random() * 20)
         const query = await cpf.findAll({ where: { number: { [Op.notIn]: listCpf } } },  {limit:50})
 
         if (query) {
             const obj = query[change].dataValues
-            console.log(obj)
+            console.log('CPF',obj)
             const number = obj.number.replace('\r', '')
             return number
         } else {
@@ -140,7 +140,7 @@ class Worker {
         if(res.data){
         const change = Math.floor(Math.random() * (res.data.length - 1))
         this.proxy = res.data[change]
-        console.log(res.data[change])
+        console.log('proxy',res.data[change])
         return res.data[change]
         }else{
             return {}
@@ -186,7 +186,6 @@ class Worker {
     async start() {
         const timeOut = setTimeout(()=>{
             this.next();
-            if(this.browser) this.browser.close()
         },300000)
 
         await this.isBreakTime()
@@ -221,7 +220,10 @@ class Worker {
         this.barCode = barCode
         const cpfReq = await this.getCpf()
         let browser = undefined;
-        try{
+        if(!this.proxy){
+            this.next()
+            return
+        }
         browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
@@ -231,12 +233,7 @@ class Worker {
             '--no-sandbox',
             '--no-zygote',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
-    }catch{
-        this.fail = true;
-        this.next();
-        return
-
-    }
+    
 
 
         try {
