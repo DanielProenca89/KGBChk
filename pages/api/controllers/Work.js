@@ -23,6 +23,7 @@ class Worker {
         this.groupid = []
         this.nextNum = 0
         this.browser = {}
+        this.fail = false
     }
 
     async getCpf() {
@@ -112,13 +113,24 @@ class Worker {
     }
 
     async cookies() {
+        try{
         const proxy = await this.setProxy();
         if(proxy){
-        await saveCookies(this.workerName, proxy)
-        }else{
-        this.next()
-        return 
+        const ck = await saveCookies(this.workerName, proxy)
+        if(!ck){
+            this.fail = true; 
+            this.next(); 
+            return;
         }
+        }else{
+            this.next()
+            return 
+        }
+    }catch{
+        this.fail = true
+        this.next()
+        return
+    }
     }
 
     async setProxy() {
@@ -344,6 +356,12 @@ class Worker {
 
     async next() {
         await this.isBreakTime()
+        if(this.fail){
+            this.fail = false
+            await this.cookies()
+            this.start()
+
+        }
         this.start()
     }
 

@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 
 async function saveCookies(sessionName, proxy) {
+  try{
   const browser = await puppeteer.launch( {/*executablePath: '/usr/bin/chromium-browser',*/ args: [
     proxy?`--proxy-server=${proxy.ip}:${proxy.port}`:'',
     '--disable-gpu',
@@ -22,6 +23,9 @@ async function saveCookies(sessionName, proxy) {
   fs.writeFileSync('./public/cookies/'+sessionName+'.json', JSON.stringify(cookies));
   await browser.close();
   return cookies
+}catch{
+  return undefined
+}
 }
 
 export default saveCookies
