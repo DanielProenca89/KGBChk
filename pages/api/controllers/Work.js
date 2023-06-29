@@ -154,8 +154,10 @@ class Worker {
         console.log(hour)
         if(hour >= 0 && hour < 4){
             //io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
-            const date = new Date().setHours(4,0,0)
+            const sec = Math.floor(Math.random() * 59)
+            const date = new Date().setHours(4,0,sec)
             console.log('Aguardando', date - new Date())
+
             await new Promise(r => setTimeout(r, date - new Date()));
             //await this.setProxy()
             await this.cookies()
@@ -310,6 +312,7 @@ class Worker {
                         await verified.create({ number: barCode.number, status: 'Cheque não possui ocorrências', cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
                         if(okText.includes("Consulta realizada fora da grade horária")){
+                            await preload.update({ free: true }, { where: { id: barCode.id } })
                             this.isBreakTime()
                             this.next()
                             return
