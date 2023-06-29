@@ -218,7 +218,9 @@ class Worker {
         }
         console.log('barcode', barCode)
         this.barCode = barCode
+        
         const cpfReq = await this.getCpf()
+
         let browser = undefined;
         if(!this.proxy){
             this.next()
@@ -232,7 +234,7 @@ class Worker {
             '--no-first-run',
             '--no-sandbox',
             '--no-zygote',
-        ], ignoreDefaultArgs: ['--disable-extensions'] });
+        ], ignoreDefaultArgs: ['--disable-extensions'], timeout: 90000 });
     
 
 
@@ -264,6 +266,7 @@ class Worker {
             const capImage = await this.handleImage(imgname)
 
             //io.emit(this.workerName, 'Aguardando resolução do captcha')
+
             const solvedCapatcha = await getCaptcha(false, capImage)
 
             await page.$eval('input[name="cpfCnpjEmitente"]', input => input.value = null);
