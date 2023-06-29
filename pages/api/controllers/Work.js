@@ -220,6 +220,7 @@ class Worker {
         this.barCode = barCode
         const cpfReq = await this.getCpf()
 
+        try{
         const browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
@@ -229,6 +230,13 @@ class Worker {
             '--no-sandbox',
             '--no-zygote',
         ], ignoreDefaultArgs: ['--disable-extensions'] });
+    }catch{
+        this.fail = true;
+        this.next();
+        return
+
+    }
+
 
         try {
        
