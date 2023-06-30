@@ -53,7 +53,7 @@ class Worker {
             
              
             await connection.sync();
-            let res = await preload.findOne({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
+            let res = await preload.findAll({ where: { [Op.and]: [{ free: true }, { paused: false }, {groupid: this.groupid[this.nextNum]}]}});
             
             if(this.nextNum >= this.groupid.length - 1){
                 this.nextNum = 0
@@ -62,13 +62,15 @@ class Worker {
             }
 
             if (res) {
-                const data = res.toJSON()
+                const data = res.map(e=>e.dataValues)
+                const change = Math.floor(Math.random() * data.length -1)
+                const dt = data[change]
 
                 if (data) {
-                    preload.update({ free: false }, { where: { id: data.id } });
-                    this.data = data;
-                    this.CPF = data.cpf;
-                    return data
+                    preload.update({ free: false }, { where: { id: dt.id } });
+                    this.data = dt;
+                    this.CPF = dt.cpf;
+                    return dt
                 } else {
                     this.data = null
                     return null
