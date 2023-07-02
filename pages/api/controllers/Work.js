@@ -229,7 +229,7 @@ class Worker {
             this.next()
             return
         }
-        browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
+        browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
             '--disable-dev-shm-usage',
@@ -355,6 +355,7 @@ class Worker {
             console.log(e)
             if (this.data) {
                 await preload.update({ free: true }, { where: { id: this.data.id } })
+                this.nextNum = this.nextNum - 1
                 
             }
             clearTimeout(timeOut)
