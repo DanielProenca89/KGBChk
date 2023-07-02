@@ -177,7 +177,7 @@ class Worker {
             await new Promise(r => setTimeout(r, date - new Date()));
             console.log('Aguardando', date - new Date())
             }else{
-            const date = new Date().setDate(day).setHours(8,0,sec)
+            const date = new Date().setHours(8,0,sec)
             await new Promise(r => setTimeout(r, date - new Date()));
             console.log('Aguardando', date - new Date())
             }
