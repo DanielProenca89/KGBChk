@@ -171,10 +171,19 @@ class Worker {
         if(hour >= 22 || hour < 8){
             //io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
             const sec = Math.floor(Math.random() * 59)
-            const date = new Date().setHours(4,0,sec)
-            console.log('Aguardando', date - new Date())
-
+            if(hour >= 22){
+            const day = new Date().getDate() + 1
+            const date = new Date().setDate(day).setHours(8,0,sec)
             await new Promise(r => setTimeout(r, date - new Date()));
+            console.log('Aguardando', date - new Date())
+            }else{
+            const date = new Date().setDate(day).setHours(8,0,sec)
+            await new Promise(r => setTimeout(r, date - new Date()));
+            console.log('Aguardando', date - new Date())
+            }
+           
+
+            
             //await this.setProxy()
             await this.cookies()
         }else{
@@ -316,7 +325,7 @@ class Worker {
                         await preload.update({ free: true }, { where: { id: barCode.id } })
                         this.nextNum = this.nextNum - 1
 
-                    } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque") {
+                    } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque" || errText == "Cheque sustado ou revogado.") {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: errText, cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
