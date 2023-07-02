@@ -226,10 +226,11 @@ class Worker {
 
         let browser = undefined;
         if(!this.proxy){
+            this.nextNum = this.nextNum - 1
             this.next()
             return
         }
-        browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ args: [
+        browser = await puppeteer.launch({/*executablePath: '/usr/bin/chromium-browser',*/ headless:false ,args: [
             `--proxy-server=${this.proxy.ip}:${this.proxy.port}`,
             '--disable-gpu',
             '--disable-dev-shm-usage',
