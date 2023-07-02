@@ -227,6 +227,7 @@ class Worker {
         let browser = undefined;
         if(!this.proxy){
             this.nextNum = this.nextNum - 1
+            await preload.update({ free: true }, { where: { id: barCode.id } })
             this.next()
             return
         }
