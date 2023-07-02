@@ -31,7 +31,7 @@ class Worker {
         const verify = await verified.findAll()
         const listCpf = verify.length > 0 ? verify.map(e => e.dataValues.cpfreq + '\r') : []
         console.log(listCpf)
-        const change = Math.floor(Math.random() * 10)
+        const change = Math.floor(Math.random() * 900000)
         const query = await cpf.findOne({ where: {id:change+1} })
 
 
