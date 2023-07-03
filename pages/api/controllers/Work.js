@@ -166,7 +166,7 @@ class Worker {
     }
 
     async isBreakTime(){
-        const hour = new Date().getUTCHours() - 3
+        const hour = new Date().getHours()
         console.log(hour)
         if((hour >= 22 || hour < 8) && hour >= 0){
             //io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
