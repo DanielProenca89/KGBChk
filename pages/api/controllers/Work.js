@@ -173,7 +173,8 @@ class Worker {
             const sec = Math.floor(Math.random() * 59)
             if(hour >= 22){
             const day = new Date().getDate() + 1
-            const date = new Date().setDate(day).setHours(8,0,sec)
+            const date = new Date().setDate(day)
+            date.setHours(8,0,sec)
             await new Promise(r => setTimeout(r, date - new Date()));
             console.log('Aguardando', date - new Date())
             }else{
