@@ -270,7 +270,7 @@ return <><div key={i} style={{ display: i == 0 ? "block" : "none", color:"red", 
 </div>
 
 <div style={{display:"grid", gridTemplateColumns:"25% 25% 25% 25%", columnGap:"1em" ,margin:"1em"}}>
-  {instances?.map((e,i)=> <div key={i} style={{width:"100%", padding:"2em", textAlign:"center", border:"1px solid #000"}}><div><span><strong>{e.name}</strong></span></div><Button onClick={()=>deleteInstances(e.id)}>Deletar</Button></div>)}
+  {instances?.map((e,i)=> <div key={i} style={{width:"100%", padding:"2em", textAlign:"center", border:"1px solid #000"}}><div><span ><strong style={{color:e.status == "Testando"?"green":"red"}}>{e.status}</strong></span></div><div><span><strong>{e.name}</strong></span></div><Button onClick={()=>deleteInstances(e.id)}>Deletar</Button></div>)}
 </div>
 
 

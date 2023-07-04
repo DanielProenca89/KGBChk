@@ -31,8 +31,8 @@ class Worker {
         const verify = await verified.findAll()
         const listCpf = verify.length > 0 ? verify.map(e => e.dataValues.cpfreq + '\r') : []
         console.log(listCpf)
-        const change = Math.floor(Math.random() * 900000)
-        const query = await cpf.findOne({ where: {id:change+1} })
+        const change = Math.floor(Math.random() * 20)
+        const query = await cpf.findOne({ where: {[Op.and]:[{id:{[Op.gt]:change}},{number:{[Op.notIn]:listCpf}}] } })
 
 
         if (query) {
@@ -169,6 +169,7 @@ class Worker {
         const hour = new Date().getHours()
         console.log(hour)
         if((hour >= 22 || hour < 8) && hour >= 0){
+            await  workers.update({status:"Pausado. Retorna às 08:00h"},{where:{name:this.workerName}})
             //io.emit(this.workerName, 'Pausado. Retorna às 04:00h')
             const sec = Math.floor(Math.random() * 59)
             if(hour >= 22){
@@ -252,10 +253,10 @@ class Worker {
             '--no-zygote',
         ], ignoreDefaultArgs: ['--disable-extensions'], timeout: 90000 });
     
-
+        
 
         try {
-       
+            await workers.update({status:"Testando"},{where:{name:this.workerName}})
             const page = await browser.newPage();
             
             for (const cookie of JSON.parse(cookies)) {
@@ -327,7 +328,7 @@ class Worker {
                         await preload.update({ free: true }, { where: { id: barCode.id } })
                         this.nextNum = this.nextNum - 1
 
-                    } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque" || errText == "Cheque sustado ou revogado.") {
+                    } else if (errText == "Excedida a quantidade de consultas de um mesmo cheque" || errText == "Cheque sustado ou revogado." || errText == "Cheque cancelado pela instituicao financeira sacada.") {
                         await preload.update({ paused: true }, { where: { groupid: barCode.groupid } })
                         await verified.create({ number: barCode.number, status: errText, cpfreq: cpfReq, groupid: barCode.groupid });
                     } else {
@@ -367,6 +368,7 @@ class Worker {
         } catch (e) {
             console.log(e)
             if (this.data) {
+                await workers.update({status:"Erro. Reiniciando"},{where:{name:this.workerName}})
                 await preload.update({ free: true }, { where: { id: this.data.id } })
                 this.nextNum = this.nextNum - 1
                 
